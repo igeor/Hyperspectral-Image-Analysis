@@ -12,16 +12,30 @@ class ConvBlock(nn.Module):
         STRIDE = 1 ,
         PADDING = 0, 
         ACTIVATE_FUNC = "relu",
-        USE_BATCHNORM = True ):
+        USE_BATCHNORM = True,
+        TRANSPOSE = False):
             
         super().__init__()
 
-        self.conv = nn.Conv2d(IN_CHANNELS, 
-                              OUT_CHANNELS.
-                              KERNEL_SIZE,
-                              STRIDE, 
-                              PADDING, 
-                              bias=False)
+        self.TRANSPOSE = TRANSPOSE
+        if(not TRANSPOSE):
+            self.conv = nn.Conv2d (
+                IN_CHANNELS, 
+                OUT_CHANNELS.
+                KERNEL_SIZE,
+                stride = STRIDE, 
+                padding = PADDING, 
+                bias = False
+            )
+            
+            self.conv = nn.ConvTranspose2d(
+                IN_CHANNELS, 
+                OUT_CHANNELS.
+                KERNEL_SIZE,
+                stride = STRIDE, 
+                padding = PADDING, 
+                bias = False
+            )
         
         self.f = getFunction("relu")
         
@@ -35,7 +49,6 @@ class ConvBlock(nn.Module):
         
         if self.USE_BATCHNORM:
             out = self.bn(out)
-            
         out = self.f(out)
 
         return out

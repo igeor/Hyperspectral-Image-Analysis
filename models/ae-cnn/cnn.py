@@ -25,7 +25,9 @@ class Net(nn.Module):
                 N_CONVBLOCKS = 4,
                 KERNEL_SIZE = 3,
                 STRIDE = 1 ,
-                PADDING = 0):
+                PADDING = 0,
+                ACTIVATE_FUNC = "relu",
+                USE_BATCHNORM = True):
         
         super(Net, self).__init__()
         self.IN_CHANNELS = IN_CHANNELS
@@ -34,15 +36,31 @@ class Net(nn.Module):
         self.KERNEL_SIZE = KERNEL_SIZE
         self.STRIDE = STRIDE
         self.PADDING = PADDING
+        self.ACTIVATE_FUNC = ACTIVATE_FUNC
+        self.USE_BATCHNORM = USE_BATCHNORM
 
         self.convBlocks = list()
         
         # Building encoder
         for i in range(N_CONVBLOCKS):
-            self.e1 = 1        
-        # self.conv1 = nn.Conv2d(1, 32, 3, 1)
-        # self.conv2 = nn.Conv2d(32, 64, 3, 1)
-        # self.dropout1 = nn.Dropout(0.25)
-        # self.dropout2 = nn.Dropout(0.5)
-        # self.fc1 = nn.Linear(9216, 128)
-        # self.fc2 = nn.Linear(128, 10)
+            self.convBlocks.append(
+                ConvBlock( self.IN_CHANNELS, 
+                    self.IN_CHANNELS // 2,
+                    self.KERNEL_SIZE,
+                    self.STRIDE,
+                    self.PADDING,
+                    self.ACTIVATE_FUNC,
+                    self.USE_BATCHNORM))
+            
+        # Building encoder
+        for i in range(N_CONVBLOCKS):
+            self.convBlocks.append(
+                ConvBlock( self.IN_CHANNELS, 
+                    self.IN_CHANNELS // 2,
+                    self.KERNEL_SIZE,
+                    self.STRIDE,
+                    self.PADDING,
+                    self.ACTIVATE_FUNC,
+                    self.USE_BATCHNORM,
+                    TRANSPOSE=True))
+            
