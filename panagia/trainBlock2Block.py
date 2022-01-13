@@ -25,38 +25,36 @@ args = parser.parse_args()
 imageDataset = PanagiaDataset("panagia.h5")
 dataLoader = DataLoader(dataset=imageDataset, batch_size=args.batchsize, shuffle=True)
 
-model = ConvNN().to(args.device)
+model = ConvNN(in_channels=2048, out_channels=3).to(args.device)
 optimizer = torch.optim.Adam(model.parameters(), lr=args.lrate)
 loss_fn = nn.L1Loss()
 
-for i in dataLoader:
-    print(i.shape)
-    print(model(i))
-    break
-# for epoch in range(N_EPOCH):
     
-#     total_loss = 0
+for epoch in range(int(args.epochs)):
+    
+    total_loss = 0
 
-#     for i, pixel in enumerate(dataLoader):
+    for i, x_in in enumerate(dataLoader):
         
-#         (encoded, decoded) = autoencoder(pixel)
+        y_out = model(x_in.to(args.device))
+        y_real = torch.tensor(torch.rand(y_out.shape)).to(args.device)
+        print(y_out.shape, y_real.shape)
+        loss = loss_fn(y_out, y_real)
+        total_loss += loss * 100
 
-#         loss = loss_fn(decoded, pixel)
-#         total_loss += loss * 100
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
 
-#         optimizer.zero_grad()
-#         loss.backward()
-#         optimizer.step()
-
-#     if(total_loss < min_total_loss):
-#         torch.save({
-#                 'epoch': epoch,
-#                 'model_state_dict': autoencoder.state_dict(),
-#                 'optimizer_state_dict': optimizer.state_dict(),
-#                 'loss': total_loss,
-#                 }, PATH)
-#         min_total_loss = total_loss
+    # if(total_loss < min_total_loss):
+    #     torch.save({
+    #             'epoch': epoch,
+    #             'model_state_dict': autoencoder.state_dict(),
+    #             'optimizer_state_dict': optimizer.state_dict(),
+    #             'loss': total_loss,
+    #             }, PATH)
+    #     min_total_loss = total_loss
     
 
-#     if(epoch % 10 == 0 and epoch > 0):
-#         print(epoch, total_loss / len(dataLoader))
+    # if(epoch % 10 == 0 and epoch > 0):
+    #     print(epoch, total_loss / len(dataLoader))
