@@ -2,6 +2,9 @@ import h5py
 import numpy as np
 import os.path 
 
+import sys
+import os
+  
 
 '''
 @exports:   
@@ -11,7 +14,7 @@ import os.path
 def h5toNumpy(filenames=[]):
     arrays = list()
     for filename in filenames:
-        f = h5py.File(os.path.join( os.getcwd(), 'panagia\data\\', filename ), 'r')
+        f = h5py.File(filename, 'r')
         
         spectra_panagia = np.array(f['dataset'])
         energies = np.array(f['energies'])
