@@ -14,11 +14,15 @@ class ConvNN(nn.Module):
         # Layers: enc_conv0, enc_conv1, pool1
         self._block1 = nn.Sequential(
         	nn.Conv2d(in_channels, 1024, 3, stride=1, padding=1),
+        	nn.ReLU(inplace=True),
+            nn.Conv2d(1024, 1024, 3, stride=1, padding=1),
         	nn.ReLU(inplace=True)
         )
         
         self._block2 = nn.Sequential(
         	nn.Conv2d(1024, 512, 3, stride=1, padding=1),
+        	nn.ReLU(inplace=True),
+            nn.Conv2d(512, 512, 3, stride=1, padding=1),
         	nn.ReLU(inplace=True)
         )
   
@@ -40,7 +44,9 @@ class ConvNN(nn.Module):
         )
             
         self._block6 = nn.Sequential(
-        	nn.Conv2d(64, out_channels, 3, stride=1, padding=1),
+        	nn.Conv2d(64, 64, 3, stride=1, padding=1),
+        	nn.ReLU(inplace=True),
+            nn.Conv2d(64, out_channels, 3, stride=1, padding=1),
         	nn.ReLU(inplace=True)
         )
         

@@ -93,8 +93,8 @@ class PanagiaDataset(Dataset):
         self.inTestPatches = list()
         self.outTestPatches = list()
 
-        r = 6; c = 9; step = 1
-        self.r = 6; self.c = 9
+        r = 14; c = 18; step = 1
+        self.r = 14 ; self.c = 18
         stepR = self.hTest // r
         stepC = self.wTest // c
 
