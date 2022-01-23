@@ -44,7 +44,7 @@ model = ConvNN(
 
 optimizer = torch.optim.Adam(
     model.parameters(), 
-    lr=args.lrate)
+    lr=float(args.lrate))
 
 
 loss_fn = nn.L1Loss()
@@ -67,9 +67,8 @@ if(bool(args.train)):
 
             patch_out = model(patch_in)
 
-            loss = loss_fn(patch_out, patch_real)
-
-            epoch_loss += (loss * 100) / int(args.epochs)
+            loss = loss_fn(patch_out, patch_real) 
+            epoch_loss +=  loss 
             
             optimizer.zero_grad()
             loss.backward()
@@ -77,12 +76,14 @@ if(bool(args.train)):
             
             
         print('epoch:',epoch, epoch_loss)
-        print('---testing---')
+
         dSet.setTrain(False)
         
         for batch_index, (patch_in, patch_real) in enumerate(testLoader):
                 
-            patch_out = model(patch_in['img'].to(str(args.device)))
+            with torch.no_grad():
+                patch_out = model(patch_in['img'].to(str(args.device)))
+                
             dSet.reconstructFromPatches(patch_out.detach(), patch_real['r'], patch_real['c'])
             
             

@@ -121,6 +121,7 @@ class PanagiaDataset(Dataset):
                 self.outTestPatches.append(outTestPatch)
         
 
+
     def setTrain(self, isTrain):
         self.isTrain = isTrain 
         
@@ -148,7 +149,8 @@ class PanagiaDataset(Dataset):
         plt.show()
     
     def showRecImage(self):
-        print('y')
+        plt.imshow(torch.sum(self.outTestRecon[0], axis=0), interpolation='nearest')
+        save_image(self.outTestRecon, 'outtorch.png')
         plt.imshow(torch.sum(self.outTestRecon[0], axis=0), interpolation='nearest')
         plt.savefig('out.png')
         
