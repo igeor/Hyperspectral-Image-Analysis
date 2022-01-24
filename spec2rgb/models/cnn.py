@@ -28,11 +28,15 @@ class ConvNN(nn.Module):
   
         self._block3 = nn.Sequential(
         	nn.Conv2d(512, 256, 3, stride=1, padding=1),
+        	nn.ReLU(inplace=True),
+            nn.Conv2d(256, 256, 3, stride=1, padding=1),
         	nn.ReLU(inplace=True)
         )
         
         self._block4 = nn.Sequential(
         	nn.Conv2d(256, 128, 3, stride=1, padding=1),
+        	nn.ReLU(inplace=True),
+            nn.Conv2d(128, 128, 3, stride=1, padding=1),
         	nn.ReLU(inplace=True)
         )
         
@@ -44,7 +48,9 @@ class ConvNN(nn.Module):
         )
             
         self._block6 = nn.Sequential(
-        	nn.Conv2d(64, 64, 3, stride=1, padding=1),
+        	nn.Conv2d(64, 64, 3, stride=2, padding=1),
+        	nn.ReLU(inplace=True),
+        	nn.ConvTranspose2d(64, 64, 3, stride=2, padding=1),
         	nn.ReLU(inplace=True),
             nn.Conv2d(64, out_channels, 3, stride=1, padding=1),
         	nn.ReLU(inplace=True)

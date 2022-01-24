@@ -2,6 +2,8 @@ from locale import normalize
 from unittest.mock import patch
 from __init__ import *
 from torchvision.utils import save_image
+import random 
+import torchvision.transforms.functional as TF
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-bs", "--batchsize", default=64)
@@ -14,6 +16,8 @@ args = parser.parse_args()
 
 print('-bs',args.batchsize)
 print('-tr',args.train)
+
+
 
 
 
@@ -47,7 +51,8 @@ optimizer = torch.optim.Adam(
     lr=float(args.lrate))
 
 
-loss_fn = nn.L1Loss()
+loss_L1 = nn.L1Loss()
+loss_L2 = nn.MSELoss()
 
 display_step = 50
 
@@ -61,17 +66,21 @@ if(bool(args.train)):
         epoch_loss = 0
 
         for batch_index, (patch_in, patch_real) in enumerate(dataLoader):
-
-            patch_in = patch_in['img'].to(args.device)
-            patch_real = patch_real['img'].to(args.device)
+            
+            patch_in, patch_real = patch_in['img'], patch_real['img']
+                
+            patch_in = patch_in.to(args.device)
+            patch_real = patch_real.to(args.device)
 
             patch_out = model(patch_in)
 
-            loss = loss_fn(patch_out, patch_real) 
-            epoch_loss +=  loss 
+            lossL1 = loss_L1(patch_out, patch_real) 
+            lossL2 = loss_L2(patch_out, patch_real)  
+
+            epoch_loss +=  lossL1 + lossL2 
             
             optimizer.zero_grad()
-            loss.backward()
+            lossL1.backward()
             optimizer.step()
             
             
@@ -80,7 +89,7 @@ if(bool(args.train)):
         dSet.setTrain(False)
         
         for batch_index, (patch_in, patch_real) in enumerate(testLoader):
-                
+            
             with torch.no_grad():
                 patch_out = model(patch_in['img'].to(str(args.device)))
                 
