@@ -4,8 +4,10 @@ from __init__ import *
 from torchvision.utils import save_image
 import random 
 import torchvision.transforms.functional as TF
+from PIL import Image
 
 parser = argparse.ArgumentParser()
+parser.add_argument("-ps", "--patchsize", default="(10,14)")
 parser.add_argument("-bs", "--batchsize", default=64)
 parser.add_argument("-ep", "--epochs", default=100)
 parser.add_argument("-lr", "--lrate", default=0.0002)
@@ -16,20 +18,31 @@ args = parser.parse_args()
 
 print('-bs',args.batchsize)
 print('-tr',args.train)
+print('-ps',args.patchsize)
 
+patch_r, patch_c = tuple(int(s.replace("(","").replace(")","")) for s in args.patchsize.split(','))
 
+# # Panagia Train - Jesus Test
+# dSet = PanagiaDataset(
+#     inTrainImagePath = parentdir + "\\" + "data\panagia.h5", 
+#     outTrainImagePath = parentdir + "\\" + "data\panagia.png",
+#     inTestImagePath = parentdir + "\\" + "data\jesus.h5", 
+#     outTestImagePath = parentdir + "\\" + "data\jesus.png",
+#     h5TrainShape = [21, 33, 840],
+#     h5TestShape = [31, 46, 840],
+#     r=patch_r, c=patch_c
+# )
 
-
-
+#Jesus Train - Panagia Test
 dSet = PanagiaDataset(
     inTrainImagePath = parentdir + "\\" + "data\jesus.h5", 
     outTrainImagePath = parentdir + "\\" + "data\jesus.png",
     inTestImagePath = parentdir + "\\" + "data\panagia.h5", 
     outTestImagePath = parentdir + "\\" + "data\panagia.png",
-    h5TrainShape = [31, 46, 2048],
-    h5TestShape = [21, 33, 2048]
+    h5TrainShape = [31, 46, 840],
+    h5TestShape = [21, 33, 840],
+    r=patch_r, c=patch_c
 )
-
 
 dataLoader = DataLoader(
     dataset = dSet, 
@@ -42,7 +55,7 @@ testLoader = DataLoader(
     shuffle = False)
 
 model = ConvNN(
-    in_channels=2048, 
+    in_channels=840, 
     out_channels=3).to(args.device)
 
 
@@ -66,9 +79,8 @@ if(bool(args.train)):
         epoch_loss = 0
 
         for batch_index, (patch_in, patch_real) in enumerate(dataLoader):
-            
             patch_in, patch_real = patch_in['img'], patch_real['img']
-                
+            
             patch_in = patch_in.to(args.device)
             patch_real = patch_real.to(args.device)
 
@@ -77,23 +89,21 @@ if(bool(args.train)):
             lossL1 = loss_L1(patch_out, patch_real) 
             lossL2 = loss_L2(patch_out, patch_real)  
 
-            epoch_loss +=  lossL1 + lossL2 
+            epoch_loss +=  lossL1 #+ lossL2 
             
             optimizer.zero_grad()
             lossL1.backward()
             optimizer.step()
             
-            
         print('epoch:',epoch, epoch_loss)
 
+
         dSet.setTrain(False)
-        
         for batch_index, (patch_in, patch_real) in enumerate(testLoader):
-            
             with torch.no_grad():
                 patch_out = model(patch_in['img'].to(str(args.device)))
-                
             dSet.reconstructFromPatches(patch_out.detach(), patch_real['r'], patch_real['c'])
             
-            
-        dSet.showRecImage()
+        #dSet.showRecImage()
+        dSet.saveRecImage('./results/epoch' + str(epoch) + '.png')
+        dSet.saveRecImage('./results/currEpoch.png')

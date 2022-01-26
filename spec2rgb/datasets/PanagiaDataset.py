@@ -11,13 +11,15 @@ from torchvision.utils import save_image
 
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+import random 
 
 def h5toNumpy(filepath):
     f = h5py.File(filepath, 'r')
     image = np.array(f['dataset'])
     energies = np.array(f['energies'])
     f.close()
-    return image
+    #print(image[:,60:900].shape)
+    return image[:,60:900]
 
 
 
@@ -46,7 +48,8 @@ class PanagiaDataset(Dataset):
         outTestImagePath,
         h5TrainShape, 
         h5TestShape,
-        isTrain = True):
+        isTrain = True,
+        r = 6, c = 9, step = 1):
         
         self.toTensor = transforms.ToTensor()
         self.isTrain = isTrain 
@@ -60,7 +63,7 @@ class PanagiaDataset(Dataset):
         # self.showImage(self.pltInTrainImage)
         self.saveImage(self.pltInTrainImage, 'inTrainImage.png')
 
-        self.outTrainImage = self.toTensor(Image.open(outTrainImagePath))
+        self.outTrainImage = self.toTensor(Image.open(outTrainImagePath).convert('RGB'))
         save_image(self.outTrainImage , 'outTrainImage.png')
         
         self.inTestImage = h5toNumpy(inTestImagePath).astype(np.float32)
@@ -75,17 +78,17 @@ class PanagiaDataset(Dataset):
         self.outTestImage = self.toTensor(Image.open(outTestImagePath).convert('RGB'))
         save_image(self.outTestImage , 'outTestImage.png')
            
-        print(self.inTrainImage.shape, type(self.inTrainImage))
-        print(self.outTrainImage.shape, type(self.outTrainImage))
-        print(self.inTestImage.shape, type(self.inTestImage))
-        print(self.outTestImage.shape, type(self.outTestImage))
+        print("inTrainImage:",self.inTrainImage.shape, type(self.inTrainImage))
+        print("outTrainImage:",self.outTrainImage.shape, type(self.outTrainImage))
+        print("inTestImage:",self.inTestImage.shape, type(self.inTestImage))
+        print("outTestImage:",self.outTestImage.shape, type(self.outTestImage))
         
         self.wTrain = h5TrainShape[1]
         self.hTrain = h5TrainShape[0]
         self.wTest = h5TestShape[1]
         self.hTest = h5TestShape[0]
 
-        self.outTrainRecon = torch.zeros((3,self.hTrain,self.wTrain))
+        self.outTrainRecon = torch.zeros((1,3,self.hTrain,self.wTrain))
         self.outTestRecon = torch.zeros((1,3,self.hTest,self.wTest))
 
         self.inTrainPatches = list()
@@ -93,10 +96,9 @@ class PanagiaDataset(Dataset):
         self.inTestPatches = list()
         self.outTestPatches = list()
 
-        r = 15; c = 19; step = 1
-        self.r = 15 ; self.c = 19
-        stepR = self.hTest // r
-        stepC = self.wTest // c
+        self.r = r ; self.c = c
+        stepR = self.hTest // self.r
+        stepC = self.wTest // self.c
 
         for i in range(0, self.wTrain - c, step):
             for j in range(0,  self.hTrain - r, step):
@@ -120,7 +122,7 @@ class PanagiaDataset(Dataset):
                 outTestPatch = Patch(outTestPatch, r_index=j, c_index=i)
                 self.outTestPatches.append(outTestPatch)
         
-
+   
 
     def setTrain(self, isTrain):
         self.isTrain = isTrain 
@@ -128,12 +130,13 @@ class PanagiaDataset(Dataset):
     def reconstructFromPatches(self, patch, r_index, c_index):
         self.outTestRecon[:,:,r_index:r_index + self.r  , c_index:c_index+self.c] = patch[0]
         
-
+    def reconstructTrainFromPatches(self, patch, r_index, c_index):
+        self.outTrainRecon[:,:,r_index:r_index + self.r  , c_index:c_index+self.c] = patch[0]
+        
     def __getitem__(self, index):
         if(not self.isTrain):
             return (self.inTestPatches[index].dict, self.outTestPatches[index].dict)
-        else:
-            return (self.inTrainPatches[index].dict, self.outTrainPatches[index].dict)
+        return (self.inTrainPatches[index].dict, self.outTrainPatches[index].dict)
     
     
     def __len__(self):
@@ -148,11 +151,17 @@ class PanagiaDataset(Dataset):
         plt.imshow(image, interpolation='nearest')
         plt.show()
     
-    def showRecImage(self):
+    def saveRecImage(self, path):
         plt.imshow(torch.sum(self.outTestRecon[0], axis=0), interpolation='nearest')
-        save_image(self.outTestRecon, 'outtorch.png')
+        save_image(self.outTestRecon, path)
         plt.imshow(torch.sum(self.outTestRecon[0], axis=0), interpolation='nearest')
         plt.savefig('out.png')
+    
+    def showTrainRecImage(self):
+        plt.imshow(torch.sum(self.outTrainRecon[0], axis=0), interpolation='nearest')
+        save_image(self.outTrainRecon, 'outtorch.png')
+        plt.imshow(torch.sum(self.outTrainRecon[0], axis=0), interpolation='nearest')
+        plt.savefig('trainout.png')
         
     def saveImage(self, image, name):
         if(type(image) == type(torch.zeros((1,2)))):
