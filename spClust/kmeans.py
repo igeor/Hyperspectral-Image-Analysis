@@ -46,9 +46,9 @@ cmap = {
     5 : [215,214,10] #yellow
 }
 
+
 imgShape = tuple(args.imgShape)
 
-    
 for n_clusters in args.n_clusters:
 
     clusterer = KMeans(n_clusters=n_clusters, random_state=10)
@@ -73,43 +73,44 @@ for n_clusters in args.n_clusters:
     out_img.save('test'+str(n_clusters)+'.png')
 
 
-    print('---subclustering---')
+    if( input('subclustering (y|n)?') == "y"):
+    
 
-    cluster_0 = dict()
-    cluster_1 = dict()
+        sub_cluster_0 = dict()
+        sub_cluster_1 = dict()
 
-    for i, pixel_label in enumerate(reversed(clusterer.labels_)):
-        r = i // imgShape[1]; c = i % imgShape[1]
-        if( pixel_label == 0):
-            cluster_0[i] = Pixel(init_i=i, clust_i=len(cluster_0), vec=X[i])
-        else:
-            cluster_1[i] = Pixel(init_i=i, clust_i=len(cluster_1), vec=X[i])
-
-
-    toSubCluster = int(input('Which cluster to subcluster (type 0 or 1)?'))
-    nSubclusters = int(input('Type n Subclusters'))
-
-    if(toSubCluster == 1):
-        X_1 = np.array([x.vec for x in cluster_1.values()])
-        kmeans = KMeans(n_clusters=3, random_state=10).fit(X_1)
-    else:
-        X_0 = np.array([x.vec for x in cluster_0.values()])
-        kmeans = KMeans(n_clusters=3, random_state=10).fit(X_0)
-
-    for i, pixel_label in enumerate(reversed(clusterer.labels_)):
-        if( pixel_label == toSubCluster):
+        for i, pixel_label in enumerate(reversed(clusterer.labels_)):
             r = i // imgShape[1]; c = i % imgShape[1]
-            #print('Pixel (', r, ',', c ,') belongs to cluster 1 and subclustered to cluster',kmeans.labels_[cluster_1[i].clust_i])# ;input()
-            
-            if(toSubCluster == 1):
-                for subClustLabel in range(nSubclusters - 1):
-                    if(kmeans.labels_[cluster_1[i].clust_i] == subClustLabel):
-                        X_out[r,c,:] = np.array(cmap[subClustLabel + 2])
-               
+            if( pixel_label == 0):
+                sub_cluster_0[i] = Pixel(init_i=i, clust_i=len(sub_cluster_0), vec=X[i])
             else:
-               for subClustLabel in range(nSubclusters - 1):
-                    if(kmeans.labels_[cluster_0[i].clust_i] == subClustLabel):
-                        X_out[r,c,:] = np.array(cmap[subClustLabel + 2])
+                sub_cluster_1[i] = Pixel(init_i=i, clust_i=len(sub_cluster_1), vec=X[i])
+
+
+        toSubCluster = int(input('Which cluster to subcluster (type 0 or 1)?'))
+        nSubclusters = int(input('Type n Subclusters'))
+
+        if(toSubCluster == 1):
+            X_1 = np.array([x.vec for x in sub_cluster_1.values()])
+            kmeans = KMeans(n_clusters=3, random_state=10).fit(X_1)
+        else:
+            X_0 = np.array([x.vec for x in sub_cluster_0.values()])
+            kmeans = KMeans(n_clusters=3, random_state=10).fit(X_0)
+
+        for i, pixel_label in enumerate(reversed(clusterer.labels_)):
+            if( pixel_label == toSubCluster):
+                r = i // imgShape[1]; c = i % imgShape[1]
+                #print('Pixel (', r, ',', c ,') belongs to cluster 1 and subclustered to cluster',kmeans.labels_[sub_cluster_1[i].clust_i])# ;input()
+                
+                if(toSubCluster == 1):
+                    for subClustLabel in range(nSubclusters - 1):
+                        if(kmeans.labels_[sub_cluster_1[i].clust_i] == subClustLabel):
+                            X_out[r,c,:] = np.array(cmap[subClustLabel + 2])
+                
+                else:
+                    for subClustLabel in range(nSubclusters - 1):
+                            if(kmeans.labels_[sub_cluster_0[i].clust_i] == subClustLabel):
+                                X_out[r,c,:] = np.array(cmap[subClustLabel + 2])
          
-    out_img = Image.fromarray(X_out.astype(np.uint8))
-    out_img.save('subtest'+str(n_clusters)+'.png')
+        out_img = Image.fromarray(X_out.astype(np.uint8))
+        out_img.save('subtest'+str(n_clusters)+'.png')
