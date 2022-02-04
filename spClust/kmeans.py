@@ -13,8 +13,13 @@ from PIL import Image
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-cl", "--n_clusters", nargs="+", default=[2,3,4,5,6])
+parser.add_argument("-imS", "--imgShape", nargs="+", default=[21,33,840])
+parser.add_argument("-fn", "--fileName", default='panagia.h5')
+
+
 args = parser.parse_args()
 args.n_clusters = [int(n_cluster) for n_cluster in args.n_clusters]
+args.imgShape = [int(dim) for dim in args.imgShape]
 
 
 def h5toNumpy(filepath):
@@ -24,9 +29,14 @@ def h5toNumpy(filepath):
     f.close()
     return image[:,60:900]
 
-X = h5toNumpy('../data/panagia.h5')
+X = h5toNumpy('../data/'+args.fileName)
 
-range_n_clusters = [2, 3, 4, 5, 6]
+class Pixel :
+    def __init__(self,init_i,clust_i,vec):
+        self.init_i = init_i
+        self.clust_i =clust_i
+        self.vec = vec
+
 cmap = { 
     0 : [0,0,0], #black
     1 : [135,34,38], #red,
@@ -36,34 +46,14 @@ cmap = {
     5 : [215,214,10] #yellow
 }
 
-imgShape = (21, 33, 840)
+imgShape = tuple(args.imgShape)
 
-
+    
 for n_clusters in args.n_clusters:
 
-    # Create a subplot with 1 row and 2 columns
-    fig, (ax1, ax2) = plt.subplots(1, 2)
-    fig.set_size_inches(16, 9)
-
-    '''
-    * The 1st subplot is the silhouette plot
-    '''
-
-    # The silhouette coefficient can range from -1, 1 but in this example all
-    # lie within [0, 1]
-    ax1.set_xlim([0, 1])
-    # The (n_clusters+1)*10 is for inserting blank space between silhouette
-    # plots of individual clusters, to demarcate them clearly.
-    ax1.set_ylim([0, len(X) + (n_clusters + 1) * 10])
-
-    # Initialize the clusterer with n_clusters value and a random generator
-    # seed of 10 for reproducibility.
     clusterer = KMeans(n_clusters=n_clusters, random_state=10)
     cluster_labels = clusterer.fit_predict(X)
 
-    # The silhouette_score gives the average value for all the samples.
-    # This gives a perspective into the density and separation of the formed
-    # clusters
     silhouette_avg = silhouette_score(X, cluster_labels)
     print(
         "For n_clusters =",
@@ -71,19 +61,55 @@ for n_clusters in args.n_clusters:
         "The average silhouette_score is :",
         silhouette_avg,
     )
+    
 
-    # Compute the silhouette scores for each sample
-    sample_silhouette_values = silhouette_samples(X, cluster_labels)
-    
-    X_out = np.zeros((imgShape[0], imgShape[1], 3))
-    
-    
+    # map cluster to color and save as image
+    X_out = np.zeros((imgShape[0], imgShape[1], 3))    
     for i, pixel_label in enumerate(reversed(clusterer.labels_)):
-        r = i // imgShape[1]
-        c = i % imgShape[1]
-        
+        r = i // imgShape[1]; c = i % imgShape[1]
         X_out[r,c,:] = np.array(cmap[pixel_label])
-    
-    
+
     out_img = Image.fromarray(X_out.astype(np.uint8))
     out_img.save('test'+str(n_clusters)+'.png')
+
+
+    print('---subclustering---')
+
+    cluster_0 = dict()
+    cluster_1 = dict()
+
+    for i, pixel_label in enumerate(reversed(clusterer.labels_)):
+        r = i // imgShape[1]; c = i % imgShape[1]
+        if( pixel_label == 0):
+            cluster_0[i] = Pixel(init_i=i, clust_i=len(cluster_0), vec=X[i])
+        else:
+            cluster_1[i] = Pixel(init_i=i, clust_i=len(cluster_1), vec=X[i])
+
+
+    toSubCluster = int(input('Which cluster to subcluster (type 0 or 1)?'))
+    nSubclusters = int(input('Type n Subclusters'))
+
+    if(toSubCluster == 1):
+        X_1 = np.array([x.vec for x in cluster_1.values()])
+        kmeans = KMeans(n_clusters=3, random_state=10).fit(X_1)
+    else:
+        X_0 = np.array([x.vec for x in cluster_0.values()])
+        kmeans = KMeans(n_clusters=3, random_state=10).fit(X_0)
+
+    for i, pixel_label in enumerate(reversed(clusterer.labels_)):
+        if( pixel_label == toSubCluster):
+            r = i // imgShape[1]; c = i % imgShape[1]
+            #print('Pixel (', r, ',', c ,') belongs to cluster 1 and subclustered to cluster',kmeans.labels_[cluster_1[i].clust_i])# ;input()
+            
+            if(toSubCluster == 1):
+                for subClustLabel in range(nSubclusters - 1):
+                    if(kmeans.labels_[cluster_1[i].clust_i] == subClustLabel):
+                        X_out[r,c,:] = np.array(cmap[subClustLabel + 2])
+               
+            else:
+               for subClustLabel in range(nSubclusters - 1):
+                    if(kmeans.labels_[cluster_0[i].clust_i] == subClustLabel):
+                        X_out[r,c,:] = np.array(cmap[subClustLabel + 2])
+         
+    out_img = Image.fromarray(X_out.astype(np.uint8))
+    out_img.save('subtest'+str(n_clusters)+'.png')

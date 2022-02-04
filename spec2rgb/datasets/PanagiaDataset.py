@@ -38,6 +38,7 @@ class Patch:
             "c":self.c_index
         }
         self.batch = (self.arr, self.r_index, self.c_index)
+        
 class PanagiaDataset(Dataset):
     
     def __init__(
