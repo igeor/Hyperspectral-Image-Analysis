@@ -136,5 +136,5 @@ for epoch in range(N_EPOCH):
 
     ##### VIEW RESULTS #####
     print("epoch ", str(epoch)+": "+str(dec_loss.item()), end="\r")
-    save_image(out_img1, 'out1.png')
-    save_image(out_img2, 'out2.png')
+    save_image(out_img1, './results/spec2spec/out1.png')
+    save_image(out_img2, './results/spec2spec/out2.png')

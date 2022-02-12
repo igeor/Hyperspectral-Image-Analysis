@@ -93,5 +93,5 @@ if(bool(args.train)):
             dSet.reconstructFromPatches(patch_out.detach(), patch_real['r'], patch_real['c'])
             
             
-        dSet.saveRecImage('./results/epoch' + str(epoch) + '.png')
-        dSet.saveRecImage('./results/currEpoch.png')
+        dSet.saveRecImage('./results/block2block/epoch' + str(epoch) + '.png')
+        dSet.saveRecImage('./results/block2block/currEpoch.png')
