@@ -1,27 +1,20 @@
-from locale import normalize
-from __init__ import *
-from .utils import h5toNumpy, npRotate
-
 from PIL import Image
 import h5py
 import numpy as np
-import os
 from torchvision import transforms 
 from torchvision.utils import save_image
-
 import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-import random 
+
+from __init__ import *
+
+
 
 def h5toNumpy(filepath):
     f = h5py.File(filepath, 'r')
     image = np.array(f['dataset'])
     energies = np.array(f['energies'])
     f.close()
-    #print(image[:,60:900].shape)
     return image[:,60:900]
-
-
 
 class Patch: 
     
@@ -62,10 +55,10 @@ class PanagiaDataset(Dataset):
         self.inTrainImage = torch.rot90(self.inTrainImage, 2, (2,1))
         self.pltInTrainImage = torch.sum(self.inTrainImage, axis=0)
         # self.showImage(self.pltInTrainImage)
-        self.saveImage(self.pltInTrainImage, 'inTrainImage.png')
+        #self.saveImage(self.pltInTrainImage, 'inTrainImage.png')
 
         self.outTrainImage = self.toTensor(Image.open(outTrainImagePath).convert('RGB'))
-        save_image(self.outTrainImage , 'outTrainImage.png')
+        #save_image(self.outTrainImage , 'outTrainImage.png')
         
         self.inTestImage = h5toNumpy(inTestImagePath).astype(np.float32)
         self.inTestImage = torch.from_numpy(self.inTestImage)
@@ -74,10 +67,10 @@ class PanagiaDataset(Dataset):
         self.inTestImage = torch.rot90(self.inTestImage, 2, (2,1))
         self.pltInTestImage = torch.sum(self.inTestImage, axis=0)
         #self.showImage(self.pltInTestImage)
-        self.saveImage(self.pltInTestImage, 'inTestImage.png')
+        #self.saveImage(self.pltInTestImage, 'inTestImage.png')
         
         self.outTestImage = self.toTensor(Image.open(outTestImagePath).convert('RGB'))
-        save_image(self.outTestImage , 'outTestImage.png')
+        #save_image(self.outTestImage , 'outTestImage.png')
            
         print("inTrainImage:",self.inTrainImage.shape, type(self.inTrainImage))
         print("outTrainImage:",self.outTrainImage.shape, type(self.outTrainImage))

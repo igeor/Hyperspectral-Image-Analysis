@@ -19,7 +19,6 @@ from datasets import PanagiaDataset
 from matplotlib import pyplot as plt
 
 from models import ConvNN
-from datasets.utils import h5toNumpy, npRotate
 
 
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))

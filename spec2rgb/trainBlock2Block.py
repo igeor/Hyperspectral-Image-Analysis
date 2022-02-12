@@ -1,10 +1,5 @@
-from locale import normalize
-from unittest.mock import patch
 from __init__ import *
-from torchvision.utils import save_image
-import random 
 import torchvision.transforms.functional as TF
-from PIL import Image
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-ps", "--patchsize", default="(10,14)")
@@ -15,10 +10,6 @@ parser.add_argument("-omn", "--outmodelname", default="ConvNN")
 parser.add_argument("-tr", "--train", default=False)
 parser.add_argument("-dev", "--device", default="cpu")
 args = parser.parse_args()
-
-print('-bs',args.batchsize)
-print('-tr',args.train)
-print('-ps',args.patchsize)
 
 patch_r, patch_c = tuple(int(s.replace("(","").replace(")","")) for s in args.patchsize.split(','))
 
@@ -71,13 +62,11 @@ display_step = 50
 
 if(bool(args.train)):
 
-    print('---training---')  
-    
+    #======== TRAINING ========#     
     for epoch in range(int(args.epochs)):
+        
         dSet.setTrain(True)
-
         epoch_loss = 0
-
         for batch_index, (patch_in, patch_real) in enumerate(dataLoader):
             patch_in, patch_real = patch_in['img'], patch_real['img']
             
@@ -87,7 +76,6 @@ if(bool(args.train)):
             patch_out = model(patch_in)
 
             lossL1 = loss_L1(patch_out, patch_real) 
-            lossL2 = loss_L2(patch_out, patch_real)  
 
             epoch_loss +=  lossL1 #+ lossL2 
             
@@ -97,13 +85,13 @@ if(bool(args.train)):
             
         print('epoch:',epoch, epoch_loss)
 
-
+        #======== VALIDATING ========#     
         dSet.setTrain(False)
         for batch_index, (patch_in, patch_real) in enumerate(testLoader):
             with torch.no_grad():
                 patch_out = model(patch_in['img'].to(str(args.device)))
             dSet.reconstructFromPatches(patch_out.detach(), patch_real['r'], patch_real['c'])
             
-        #dSet.showRecImage()
+            
         dSet.saveRecImage('./results/epoch' + str(epoch) + '.png')
         dSet.saveRecImage('./results/currEpoch.png')
