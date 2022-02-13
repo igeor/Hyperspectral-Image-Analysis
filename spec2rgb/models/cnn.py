@@ -71,46 +71,6 @@ class ConvNN(nn.Module):
         	nn.ReLU(inplace=True)
         )
         
-        self._block7 = nn.Sequential(
-        	nn.Conv2d(3, 32, 3, stride=2, padding=1),
-        	nn.ReLU(inplace=True),
-        	nn.Conv2d(32, 32, 3, stride=1, padding=1),
-        	nn.ReLU(inplace=True)
-        )
-        
-        
-        self._block8 = nn.Sequential(
-        	nn.Conv2d(32, 64, 3, stride=1, padding=1),
-        	nn.ReLU(inplace=True),
-        	nn.Conv2d(64, 64, 3, stride=1, padding=1),
-        	nn.ReLU(inplace=True)
-        )
-        
-        self._block9 = nn.Sequential(
-        	nn.Conv2d(64, 32, 3, stride=1, padding=1),
-        	nn.ReLU(inplace=True),
-        	nn.Conv2d(32, 32, 3, stride=1, padding=1),
-        	nn.ReLU(inplace=True)
-        )
-        
-        self._block10 = nn.Sequential(
-        	nn.ConvTranspose2d(64, out_channels, 3, stride=2, padding=1),
-        	nn.ReLU(inplace=True),
-        	nn.Conv2d(out_channels, out_channels, 3, stride=1, padding=1),
-        	nn.ReLU(inplace=True)
-        )
-        
-        self._block11 = nn.Sequential(
-        	nn.Conv2d(out_channels * 2, out_channels, 3, stride=1, padding=1),
-        	nn.ReLU(inplace=True),
-        	nn.Conv2d(out_channels, out_channels, 3, stride=1, padding=1),
-        	nn.ReLU(inplace=True)
-        )
-        
-        
-        # Initialize weights
-        #self._init_weights()
-
 
     def _init_weights(self):
         """Initializes weights using He et al. (2015)."""
@@ -135,15 +95,5 @@ class ConvNN(nn.Module):
         x5 = self._block5(x4)
         #print(x5.shape)
         x6 = self._block6(x5)
-        #print(x6.shape)
-        x7 = self._block7(x6)
-        #print(x7.shape)
-        x8 = self._block8(x7)
-        #print(x8.shape)
-        x9 = self._block9(x8)
-        #print(x9.shape)
-        x10 = self._block10(torch.cat([x9, x7], dim=1))
-        #print(x10.shape)
-        x11 = self._block11(torch.cat([x10, x6], dim=1))
-        #print(x11.shape)
-        return x11
+        
+        return x6

@@ -26,12 +26,12 @@ patch_r, patch_c = tuple(int(s.replace("(","").replace(")","")) for s in args.pa
 
 #Jesus Train - Panagia Test
 dSet = PanagiaDataset(
-    inTrainImagePath = parentdir + "\\" + "data\jesus.h5", 
-    outTrainImagePath = parentdir + "\\" + "data\jesus.png",
-    inTestImagePath = parentdir + "\\" + "data\panagia.h5", 
-    outTestImagePath = parentdir + "\\" + "data\panagia.png",
-    h5TrainShape = [31, 46, 840],
-    h5TestShape = [21, 33, 840],
+    inTrainImagePath = parentdir + "\\" + "data\panagia.h5", 
+    outTrainImagePath = parentdir + "\\" + "data\panagia.png",
+    inTestImagePath = parentdir + "\\" + "data\jesus.h5", 
+    outTestImagePath = parentdir + "\\" + "data\jesus.png",
+    h5TrainShape = [21, 33, 840],
+    h5TestShape = [31, 46, 840],
     r=patch_r, c=patch_c
 )
 
@@ -64,7 +64,6 @@ if(bool(args.train)):
 
     #======== TRAINING ========#     
     for epoch in range(int(args.epochs)):
-        
         dSet.setTrain(True)
         epoch_loss = 0
         for batch_index, (patch_in, patch_real) in enumerate(dataLoader):
@@ -93,5 +92,5 @@ if(bool(args.train)):
             dSet.reconstructFromPatches(patch_out.detach(), patch_real['r'], patch_real['c'])
             
             
-        dSet.saveRecImage('./results/block2block/epoch' + str(epoch) + '.png')
+        #dSet.saveRecImage('./results/block2block/epoch' + str(epoch) + '.png')
         dSet.saveRecImage('./results/block2block/currEpoch.png')

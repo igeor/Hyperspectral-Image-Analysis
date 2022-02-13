@@ -12,7 +12,8 @@ from __init__ import *
 
 
 def PSNR(img1, img2):
-    mse = torch.mean((img1 - img2) ** 2)
+    mse = torch.mean((img1*255.0 - img2*255.0) ** 2)
+    
     return 20 * torch.log10(255.0 / torch.sqrt(mse))
     
 parser = argparse.ArgumentParser()
@@ -21,6 +22,8 @@ parser.add_argument("-bs", "--batchsize", default=32)
 parser.add_argument("-lr", "--lrate", default=0.0002)
 parser.add_argument("-ep", "--epochs", default=100)
 parser.add_argument("-tr", "--ntrain", default=10)
+parser.add_argument("-ae", "--autoencoder", default=False)
+
 args = parser.parse_args()
 
 device = "cpu"
@@ -40,8 +43,8 @@ testSet = PixelPanagiaDataset(
     inSpectraPath =  parentdir + "\\" + "data\jesus.h5"
 )
 
-trainLoader = DataLoader(dataset=trainSet, batch_size=32)
-testLoader = DataLoader(dataset=testSet, batch_size=1)
+trainLoader = DataLoader(dataset=trainSet, batch_size=32, shuffle=True)
+testLoader = DataLoader(dataset=testSet, batch_size=1, shuffle=False)
 
 
 avg_psnr_metric = 0
@@ -65,24 +68,31 @@ for i_train in range(int(args.ntrain)):
             pixel, pixel_real = pixel.to(device), pixel_real.to(device)
             
             ### Decoder Loss Estimation ###
-            dec_optimizer.zero_grad()
-            with torch.no_grad():
-                x1,x2,x3,x4,encoded  = encoder(pixel)
-            decoded = decoder(x1,x2,x3,x4,encoded.detach())
-            dec_loss = L1Loss(decoded, pixel) 
+            if(bool(args.autoencoder)):
+                dec_optimizer.zero_grad()
+                with torch.no_grad():
+                    x1,x2,x3,x4,encoded  = encoder(pixel)
+                decoded = decoder(x1,x2,x3,x4,encoded.detach())
+                dec_loss = L2Loss(decoded, pixel) 
 
             ### Encoder Loss Estimation ###
             enc_optimizer.zero_grad()
             x1,x2,x3,x4,encoded  = encoder(pixel)
-            decoded = decoder(x1,x2,x3,x4,encoded)
-            enc_loss = L1Loss(decoded, pixel) 
-            enc_loss = L2Loss(encoded, pixel_real) * 100 # * (1 - epoch/int(args.epochs))* 100
+            enc_loss = L2Loss(encoded, pixel_real) * 100 #* 100  # * (1 - epoch/int(args.epochs))* 100
+            
+            if(bool(args.autoencoder)): 
+                # add decoder's loss to encoder 
+                # in order to act as autoencoder
+                with torch.no_grad():
+                    decoded = decoder(x1,x2,x3,x4,encoded)
+                enc_loss += L2Loss(decoded, pixel) 
             
             ### Update Models Weights ###
             enc_loss.backward()
             enc_optimizer.step()
-            dec_loss.backward()
-            dec_optimizer.step()
+            if(bool(args.autoencoder)):
+                dec_loss.backward()
+                dec_optimizer.step()
 
             
 
@@ -105,7 +115,7 @@ for i_train in range(int(args.ntrain)):
             max_psnr_metric = psnr_metric.item()
             best_epoch = epoch
             best_out_img = out_img
-            save_image(out_img, './results/spec2spec/best_'+
+            save_image(out_img, './results/spec2spec/curr_'+
                 args.outfilename+'-'
                 'bs_'+str(int(args.batchsize))+'-'+
                 'lr_'+str(float(args.lrate))+'-'+
@@ -115,9 +125,9 @@ for i_train in range(int(args.ntrain)):
             total_max_psnr_metric = psnr_metric.item()
             total_best_out_img = out_img
 
-        print(" | itrain "+str(i_train)+ 
+        print(" | i_train "+str(i_train)+ 
               " | epoch "+str(epoch)+
-              " | loss "+str(round(enc_loss.item(),6))+
+              " | enc_loss "+str(round(enc_loss.item(),6))+
               " | psnr "+str(round(max_psnr_metric,2)), end="\r")
     
     print()

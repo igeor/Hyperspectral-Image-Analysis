@@ -33,11 +33,11 @@ class Encoder(nn.Module):
         #print(x1.shape)
         x2 = self.l2(x1); 
         if(train):
-            x2 == nn.Dropout(0.2)
+            x2 == nn.Dropout(0.3)
         #print(x2.shape)
         x3 = self.l3(x2); 
         if(train):
-            x2 == nn.Dropout(0.2)
+            x2 == nn.Dropout(0.3)
         #print(x3.shape)
         x4 = self.l4(x3)
         #print(x4.shape)
@@ -77,11 +77,11 @@ class Decoder(nn.Module):
         #print(x1.shape)
         x2 = self.l2(x1 + x4_e); 
         if(train):
-            x2 == nn.Dropout(0.2)
+            x2 == nn.Dropout(0.3)
         #print(x2.shape)
         x3 = self.l3(x2 + x3_e); 
         if(train):
-            x2 == nn.Dropout(0.2)
+            x2 == nn.Dropout(0.3)
         #print(x3.shape)
         x4 = self.l4(x3 + x2_e)
         #print(x4.shape)
