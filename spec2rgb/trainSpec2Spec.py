@@ -56,8 +56,8 @@ for i_train in range(int(args.ntrain)):
     decoder = Decoder(3,840).to(device)
     dec_optimizer = torch.optim.Adam(decoder.parameters(), lr=float(args.lrate))
 
-    L1Loss = nn.L1Loss()
-    L2Loss = nn.MSELoss()
+    loss_1 = nn.SmoothL1Loss()
+    loss_2 = nn.MSELoss()
 
     ##### TRAINING #####
     max_psnr_metric = -1
@@ -68,24 +68,26 @@ for i_train in range(int(args.ntrain)):
             pixel, pixel_real = pixel.to(device), pixel_real.to(device)
             
             ### Decoder Loss Estimation ###
-            if(bool(args.autoencoder)):
-                dec_optimizer.zero_grad()
-                with torch.no_grad():
-                    x1,x2,x3,x4,encoded  = encoder(pixel)
-                decoded = decoder(x1,x2,x3,x4,encoded.detach())
-                dec_loss = L2Loss(decoded, pixel) 
+            dec_loss = 0
+            for step in range(1):
+                if(bool(args.autoencoder)):
+                    dec_optimizer.zero_grad()
+                    with torch.no_grad():
+                        x1,x2,x3,x4,x5,encoded  = encoder(pixel)
+                    decoded = decoder(x1,x2,x3,x4,x5,encoded.detach())
+                    dec_loss += loss_1(decoded, pixel) 
 
             ### Encoder Loss Estimation ###
             enc_optimizer.zero_grad()
-            x1,x2,x3,x4,encoded  = encoder(pixel)
-            enc_loss = L2Loss(encoded, pixel_real) * 100 #* 100  # * (1 - epoch/int(args.epochs))* 100
+            x1,x2,x3,x4,x5,encoded  = encoder(pixel)
+            enc_loss = loss_2(encoded, pixel_real) #* 100 #* 100  # * (1 - epoch/int(args.epochs))* 100
             
             if(bool(args.autoencoder)): 
                 # add decoder's loss to encoder 
                 # in order to act as autoencoder
                 with torch.no_grad():
-                    decoded = decoder(x1,x2,x3,x4,encoded)
-                enc_loss += L2Loss(decoded, pixel) 
+                    decoded = decoder(x1,x2,x3,x4,x5,encoded)
+                enc_loss += loss_1(decoded, pixel) 
             
             ### Update Models Weights ###
             enc_loss.backward()
@@ -104,7 +106,7 @@ for i_train in range(int(args.ntrain)):
             r = i // 46; c = i % 46
 
             with torch.no_grad():
-                x1,x2,x3,x4,encoded = encoder(pixel, train=False)
+                x1,x2,x3,x4,x5,encoded = encoder(pixel, train=False)
             
             out_img[:, r, c] = encoded
 
