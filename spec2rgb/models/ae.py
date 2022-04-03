@@ -36,7 +36,7 @@ class Encoder(nn.Module):
         
     def forward(self, x_in, train=True):
         x1 = self.l1(x_in)
-        #print(x1.shape)
+
         x2 = self.l2(x1); 
         if(train):
             x2 == self.dropout(x2)
