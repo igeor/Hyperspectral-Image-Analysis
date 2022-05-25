@@ -2,46 +2,29 @@ import torch
 import torch.nn as nn
 
 class ConvModel(nn.Module):
-    def __init__(self, in_channels, num_targets, mid=8):
+    def __init__(self, num_features, in_channels, num_targets, poolSize=5, kernel_size=5, stide=1, padding=1):
 
         super(ConvModel, self).__init__()
         
+        self.conv1 = nn.Sequential(
+            nn.Conv1d(in_channels=in_channels, out_channels=1, 
+                kernel_size=kernel_size, stride=stide, padding=padding),
+            nn.ReLU(),
+            nn.MaxPool1d(poolSize)
+        )
+
         self.l1 = nn.Sequential(
-            nn.Conv1d(in_channels, mid, 3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool1d(2)
+            nn.Linear(num_features // poolSize, 100),
+            nn.ReLU()
         )
 
-        self.l2 = nn.Sequential(
-            nn.Conv1d(mid, mid * 2, 3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool1d(2)
-        )
-        
-        self.l3 = nn.Sequential(
-            nn.Conv1d(mid * 2, mid * 4, 3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool1d(2)
-        )
-
-        self.l4 = nn.Sequential(
-            nn.Conv1d(mid * 4, mid * 8, 3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool1d(2)
-        )
-
-        self.mlp = nn.Sequential(
-            nn.Linear((mid * 8) * (1948 // 2 // 2 // 2 // 2), 100),
-            nn.ReLU(),
-            nn.Linear(100, num_targets)
+        self.lOut = nn.Sequential(
+            nn.Linear(100, num_targets),
+            nn.ReLU()
         )
 
     def forward(self, x_in):
-
-        x1 = self.l1(x_in)#; print(x1.shape)
-        x2 = self.l2(x1)#; print(x2.shape)
-        x3 = self.l3(x2)#; print(x3.shape)
-        x4 = self.l4(x3)#; print(x4.shape)
-        x_flat = torch.flatten(x4, start_dim=1, end_dim=- 1)
-        x_out = self.mlp(x_flat)
-        return x_out
+        x1 = self.conv1(x_in)
+        x2 = self.l1(x1)
+        xOut = self.lOut(x2)
+        return xOut
